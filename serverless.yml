@@ -1,0 +1,82 @@
+  service: todo-api
+  provider:
+    name: aws
+    runtime: nodejs18.x
+    region: eu-west-1
+    deploymentBucket:
+      name: todo-amir
+  resources:
+    todos:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        TableName: Todos
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: status
+            AttributeType: S
+          - AttributeName: dueDate
+            AttributeType: S
+          - AttributeName: createdTime
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        GlobalSecondaryIndexes:
+          - IndexName: StatusIndex
+            KeySchema:
+              - AttributeName: status
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: DueDateIndex
+            KeySchema:
+              - AttributeName: dueDate
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: CreatedTimeIndex
+            KeySchema:
+              - AttributeName: createdTime
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+  functions:
+    createTodo:
+      handler: src/handlers/createTodo.handler
+      events:
+        - http:
+            path: todos
+            method: post
+
+    getTodos:
+      handler: src/handlers/filterTodo.handler
+      events:
+        - http:
+            path: todos
+            method: get
+            request:
+              parameters:
+                querystrings:
+                  status: false
+                  createdTime: false
+                  dueDate: false
+
+    updateTodo:
+      handler: src/handlers/updateTodo.handler
+      events:
+        - http:
+            path: todos/{id}
+            method: put
+
+    deleteTodo:
+      handler: src/handlers/deleteTodo.handler
+      events:
+        - http:
+            path: todos/{id}
+            method: delete
+
+
