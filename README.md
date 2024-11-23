@@ -39,24 +39,7 @@ This project is a serverless API for managing Todo items, built with AWS Lambda,
      "status": "In Progress"
    }
    ```
-#### 2. **Get Todo**
-- **Method**: `GET`
-- **URL**: `/todos/{id}`
-
-**Path Parameter:**:
-- ```id```(string): `/todos/{id}`
-
-##### Response:
-   ```json
-   {
-   "id": "123e4567-e89b-12d3-a456-426614174000",
-   "title": "Learn AWS",
-   "createdTime": "2024-11-20T12:34:56.789Z",
-   "dueDate": "2024-11-25",
-   "status": "In Progress"
-   }
-   ```
-#### 3. **Update Todo**
+#### 2. **Update Todo**
 - **Method**: `PUT`
 - **URL**: `/todos/{id}`
 
@@ -81,7 +64,7 @@ This project is a serverless API for managing Todo items, built with AWS Lambda,
    "status": "In Progress"
    }
    ```
-#### 4. **Delete Todo**
+#### 3. **Delete Todo**
 - **Method**: `DELETE`
 - **URL**: `/todos/{id}`
 
@@ -94,7 +77,7 @@ This project is a serverless API for managing Todo items, built with AWS Lambda,
    "message": "Todo deleted successfully"
    }
    ```
-#### 5. **List Todo**
+#### 4. **List Todo**
 - **Method**: `GET`
 - **URL**: `/todos`
 

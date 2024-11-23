@@ -5,13 +5,15 @@
     region: eu-west-1
     deploymentBucket:
       name: todo-amir
+    environment:
+      TODOS_TABLE: ${env:TODOS_TABLE}
   resources:
     todos:
       Type: AWS::DynamoDB::Table
       DeletionPolicy: Retain
       UpdateReplacePolicy: Retain
       Properties:
-        TableName: Todos
+        TableName: ${env:TODOS_TABLE}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -51,6 +53,12 @@
         - http:
             path: todos
             method: post
+      iamRoleStatements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}
 
     getTodos:
       handler: src/handlers/filterTodo.handler
@@ -64,6 +72,13 @@
                   status: false
                   createdTime: false
                   dueDate: false
+      iamRoleStatements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}/index/*
 
     updateTodo:
       handler: src/handlers/updateTodo.handler
@@ -71,6 +86,12 @@
         - http:
             path: todos/{id}
             method: put
+      iamRoleStatements:
+        - Effect: Allow
+          Action:
+            - dynamodb:UpdateItem
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}
 
     deleteTodo:
       handler: src/handlers/deleteTodo.handler
@@ -78,5 +99,9 @@
         - http:
             path: todos/{id}
             method: delete
-
-
+      iamRoleStatements:
+        - Effect: Allow
+          Action:
+            - dynamodb:DeleteItem
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}
