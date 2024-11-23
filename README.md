@@ -17,10 +17,21 @@ This project is a serverless API for managing Todo items, built with AWS Lambda,
 2. Install dependencies
     ```bash
    npm install
-3. Deploy
-    ```bash
-   serverless deploy
 
+## Usage
+### Start locally
+   ```bash
+   npm run start
+   ````
+### Deploy to AWS
+   ```bash
+   npm run deploy
+   ```
+### Run Tests
+   ```bash
+   npm run test
+   npm run test:watch
+   ````
 ## API Documentation
 
 ### Endpoints

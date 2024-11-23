@@ -3,49 +3,72 @@
     name: aws
     runtime: nodejs18.x
     region: eu-west-1
-    deploymentBucket:
-      name: todo-amir
     environment:
       TODOS_TABLE: ${env:TODOS_TABLE}
   resources:
-    todos:
-      Type: AWS::DynamoDB::Table
-      DeletionPolicy: Retain
-      UpdateReplacePolicy: Retain
-      Properties:
-        TableName: ${env:TODOS_TABLE}
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-          - AttributeName: status
-            AttributeType: S
-          - AttributeName: dueDate
-            AttributeType: S
-          - AttributeName: createdTime
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-        GlobalSecondaryIndexes:
-          - IndexName: StatusIndex
-            KeySchema:
-              - AttributeName: status
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-          - IndexName: DueDateIndex
-            KeySchema:
-              - AttributeName: dueDate
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-          - IndexName: CreatedTimeIndex
-            KeySchema:
-              - AttributeName: createdTime
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
+    Resources:
+      LambdaExecutionRole:
+        Type: AWS::IAM::Role
+        Properties:
+          AssumeRolePolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Principal:
+                  Service: lambda.amazonaws.com
+                Action: sts:AssumeRole
+          Policies:
+            - PolicyName: LambdaDynamoDBPolicy
+              PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                  - Effect: Allow
+                    Action:
+                      - dynamodb:PutItem
+                      - dynamodb:Query
+                      - dynamodb:UpdateItem
+                      - dynamodb:DeleteItem
+                    Resource:
+                      - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}
+                      - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}/index/*
+      TodosTable:
+        Type: AWS::DynamoDB::Table
+        DeletionPolicy: Retain
+        UpdateReplacePolicy: Retain
+        Properties:
+          TableName: ${env:TODOS_TABLE}
+          AttributeDefinitions:
+            - AttributeName: id
+              AttributeType: S
+            - AttributeName: status
+              AttributeType: S
+            - AttributeName: dueDate
+              AttributeType: S
+            - AttributeName: createdTime
+              AttributeType: S
+          KeySchema:
+            - AttributeName: id
+              KeyType: HASH
+          BillingMode: PAY_PER_REQUEST
+          GlobalSecondaryIndexes:
+            - IndexName: StatusIndex
+              KeySchema:
+                - AttributeName: status
+                  KeyType: HASH
+              Projection:
+                ProjectionType: ALL
+            - IndexName: DueDateIndex
+              KeySchema:
+                - AttributeName: dueDate
+                  KeyType: HASH
+              Projection:
+                ProjectionType: ALL
+            - IndexName: CreatedTimeIndex
+              KeySchema:
+                - AttributeName: createdTime
+                  KeyType: HASH
+              Projection:
+                ProjectionType: ALL
   functions:
     createTodo:
       handler: src/handlers/createTodo.handler
@@ -53,12 +76,7 @@
         - http:
             path: todos
             method: post
-      iamRoleStatements:
-        - Effect: Allow
-          Action:
-            - dynamodb:PutItem
-          Resource:
-            - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}
+      role: LambdaExecutionRole
 
     getTodos:
       handler: src/handlers/filterTodo.handler
@@ -72,26 +90,14 @@
                   status: false
                   createdTime: false
                   dueDate: false
-      iamRoleStatements:
-        - Effect: Allow
-          Action:
-            - dynamodb:Query
-          Resource:
-            - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}
-            - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}/index/*
-
+      role: LambdaExecutionRole
     updateTodo:
       handler: src/handlers/updateTodo.handler
       events:
         - http:
             path: todos/{id}
             method: put
-      iamRoleStatements:
-        - Effect: Allow
-          Action:
-            - dynamodb:UpdateItem
-          Resource:
-            - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}
+      role: LambdaExecutionRole
 
     deleteTodo:
       handler: src/handlers/deleteTodo.handler
@@ -99,9 +105,4 @@
         - http:
             path: todos/{id}
             method: delete
-      iamRoleStatements:
-        - Effect: Allow
-          Action:
-            - dynamodb:DeleteItem
-          Resource:
-            - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}
+      role: LambdaExecutionRole

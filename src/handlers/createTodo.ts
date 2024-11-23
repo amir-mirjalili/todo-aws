@@ -1,12 +1,12 @@
 import { DynamoDB } from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
-import { APIGatewayProxyHandler } from 'aws-lambda';
+import {APIGatewayProxyEvent, APIGatewayProxyHandler} from 'aws-lambda';
 import {CreateTodo} from "../dto/createTodo";
 import {Todo} from "../models/todo";
 
 const db = new DynamoDB.DocumentClient();
 
-export const handler: APIGatewayProxyHandler = async (event) => {
+export const handler: APIGatewayProxyHandler = async (event:APIGatewayProxyEvent) => {
     // Parse the request body into the expected DTO structure
     const body: CreateTodo = JSON.parse(event.body || '{}');
 
