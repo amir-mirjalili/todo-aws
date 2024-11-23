@@ -1,9 +1,10 @@
-import { handler } from './queryTodo';
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
+import {handler} from "./queryTodo";
 
+// Mock DynamoDB DocumentClient
 jest.mock('aws-sdk', () => {
     const mDocumentClient = {
-        query: jest.fn().mockReturnThis(),
+        scan: jest.fn().mockReturnThis(),
         promise: jest.fn().mockResolvedValue({
             Items: [
                 { id: '1', title: 'Test Todo', status: 'In Progress', dueDate: '2024-12-01' },
@@ -19,6 +20,7 @@ jest.mock('aws-sdk', () => {
 
 describe('Filter Todo Lambda Function', () => {
     const mockContext: Context = {} as any;
+    const mDocumentClient = new (jest.requireMock('aws-sdk').DynamoDB.DocumentClient)();
 
     it('should filter todos by status', async () => {
         const event: APIGatewayProxyEvent = {
@@ -27,11 +29,85 @@ describe('Filter Todo Lambda Function', () => {
 
         const result = await handler(event, mockContext, () => null);
         if (result) {
+            expect(result).toBeDefined();
             expect(result.statusCode).toBe(200);
             expect(JSON.parse(result.body)).toEqual([
                 {id: '1', title: 'Test Todo', status: 'In Progress', dueDate: '2024-12-01'},
             ]);
         }
+
+        expect(mDocumentClient.scan).toHaveBeenCalledWith({
+            TableName: process.env.TODOS_TABLE!,
+            FilterExpression: 'status = :status',
+            ExpressionAttributeValues: { ':status': 'In Progress' },
+        });
     });
 
+    beforeAll(() => {
+        process.env.TODOS_TABLE = 'TodosTable';
+    });
+
+    afterAll(() => {
+        delete process.env.TODOS_TABLE;
+    });
+
+    it('should filter todos by dueDate', async () => {
+        const event: APIGatewayProxyEvent = {
+            queryStringParameters: { dueDate: '2024-12-01' },
+        } as any;
+
+        const result = await handler(event, mockContext, () => null);
+        if (result) {
+            expect(result).toBeDefined();
+            expect(result.statusCode).toBe(200);
+            expect(JSON.parse(result.body)).toEqual([
+                {id: '1', title: 'Test Todo', status: 'In Progress', dueDate: '2024-12-01'},
+            ]);
+        }
+
+        expect(mDocumentClient.scan).toHaveBeenCalledWith({
+            TableName: process.env.TODOS_TABLE!,
+            FilterExpression: 'dueDate = :dueDate',
+            ExpressionAttributeValues: { ':dueDate': '2024-12-01' },
+        });
+    });
+
+    it('should filter todos by both status and dueDate', async () => {
+        const event: APIGatewayProxyEvent = {
+            queryStringParameters: { status: 'In Progress', dueDate: '2024-12-01' },
+        } as any;
+
+        const result = await handler(event, mockContext, () => null);
+        if (result) {
+            expect(result).toBeDefined();
+            expect(result.statusCode).toBe(200);
+            expect(JSON.parse(result.body)).toEqual([
+                {id: '1', title: 'Test Todo', status: 'In Progress', dueDate: '2024-12-01'},
+            ]);
+        }
+
+        expect(mDocumentClient.scan).toHaveBeenCalledWith({
+            TableName: process.env.TODOS_TABLE!,
+            FilterExpression: 'status = :status AND dueDate = :dueDate',
+            ExpressionAttributeValues: { ':status': 'In Progress', ':dueDate': '2024-12-01' },
+        });
+    });
+
+    it('should return all todos if no filters are applied', async () => {
+        const event: APIGatewayProxyEvent = {
+            queryStringParameters: null,
+        } as any;
+
+        const result = await handler(event, mockContext, () => null);
+        if (result) {
+            expect(result).toBeDefined();
+            expect(result.statusCode).toBe(200);
+            expect(JSON.parse(result.body)).toEqual([
+                {id: '1', title: 'Test Todo', status: 'In Progress', dueDate: '2024-12-01'},
+            ]);
+        }
+        expect(mDocumentClient.scan).toHaveBeenCalledWith({
+            TableName: process.env.TODOS_TABLE!,
+        });
+    });
 });

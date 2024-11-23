@@ -31,6 +31,16 @@
                     Resource:
                       - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}
                       - arn:aws:dynamodb:${self:provider.region}:*:table/${env:TODOS_TABLE}/index/*
+            - PolicyName: LambdaCloudWatchPolicy
+              PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                  - Effect: Allow
+                    Action:
+                      - logs:CreateLogGroup
+                      - logs:CreateLogStream
+                      - logs:PutLogEvents
+                    Resource: "arn:aws:logs:*:*:*"
       TodosTable:
         Type: AWS::DynamoDB::Table
         DeletionPolicy: Retain
@@ -77,9 +87,11 @@
             path: todos
             method: post
       role: LambdaExecutionRole
+      environment:
+        TODOS_TABLE: ${env:TODOS_TABLE}
 
     getTodos:
-      handler: src/handlers/filterTodo.handler
+      handler: src/handlers/queryTodo.handler
       events:
         - http:
             path: todos
@@ -91,6 +103,8 @@
                   createdTime: false
                   dueDate: false
       role: LambdaExecutionRole
+      environment:
+        TODOS_TABLE: ${env:TODOS_TABLE}
     updateTodo:
       handler: src/handlers/updateTodo.handler
       events:
@@ -98,6 +112,8 @@
             path: todos/{id}
             method: put
       role: LambdaExecutionRole
+      environment:
+        TODOS_TABLE: ${env:TODOS_TABLE}
 
     deleteTodo:
       handler: src/handlers/deleteTodo.handler
@@ -106,3 +122,5 @@
             path: todos/{id}
             method: delete
       role: LambdaExecutionRole
+      environment:
+        TODOS_TABLE: ${env:TODOS_TABLE}

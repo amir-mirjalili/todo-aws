@@ -19,10 +19,7 @@ This project is a serverless API for managing Todo items, built with AWS Lambda,
    npm install
 
 ## Usage
-### Start locally
-   ```bash
-   npm run start
-   ````
+
 ### Deploy to AWS
    ```bash
    npm run deploy

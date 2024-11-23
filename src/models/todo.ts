@@ -1,7 +1,7 @@
 export interface Todo {
     id: string;
     title: string;
-    createdTime: Date;
+    createdTime: string;
     dueDate: Date;
     status:TodoStatus
 }

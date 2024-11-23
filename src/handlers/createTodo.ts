@@ -9,7 +9,6 @@ const db = new DynamoDB.DocumentClient();
 export const handler: APIGatewayProxyHandler = async (event:APIGatewayProxyEvent) => {
     // Parse the request body into the expected DTO structure
     const body: CreateTodo = JSON.parse(event.body || '{}');
-
     // Validate that all required fields are provided
     if (!body.title || !body.dueDate || !body.status) {
         return {
@@ -22,16 +21,20 @@ export const handler: APIGatewayProxyHandler = async (event:APIGatewayProxyEvent
     const todo: Todo = {
         id: uuidv4(),
         title: body.title,
-        createdTime: new Date(),
+        createdTime: new Date().toISOString(),
         dueDate: body.dueDate,
         status: body.status,
     };
 
+    try {
     // Save the new  item to DynamoDB
     await db.put({ TableName: process.env.TODOS_TABLE!, Item: todo }).promise();
+    }catch (e){
+        console.log("error:",e)
+    }
 
     return {
         statusCode: 201,
-        body:JSON.stringify(body),
+        body:JSON.stringify(todo),
     };
 };

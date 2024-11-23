@@ -14,6 +14,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         return { statusCode: 400, body: JSON.stringify({ message: 'Missing Todo id' }) };
     }
 
+    if (!body){
+        return { statusCode: 400, body: JSON.stringify({ message: 'Missing Todo update item' }) };
+    }
+
     // Initialize arrays and objects to construct the DynamoDB UpdateExpression
     const updateExpression: string[] = [];
     const expressionAttributeNames: Record<string, string> = {};

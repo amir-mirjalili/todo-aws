@@ -1,34 +1,45 @@
 import { DynamoDB } from 'aws-sdk';
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import {FilterTodo} from "../dto/filterTodo";
-import {Todo} from "../models/todo";
+import { FilterTodo } from "../dto/filterTodo";
+import { Todo } from "../models/todo";
 
 const db = new DynamoDB.DocumentClient();
 
 export const handler: APIGatewayProxyHandler = async (event) => {
     const filters: FilterTodo = event.queryStringParameters || {};
-    const params: DynamoDB.DocumentClient.QueryInput = {
+    const params: DynamoDB.DocumentClient.ScanInput = {
         TableName: process.env.TODOS_TABLE!,
     };
 
+    // Add filtering conditions dynamically
+    const filterExpressions: string[] = [];
+    const expressionAttributeValues: { [key: string]: string } = {};
+
     if (filters.status) {
-        params.IndexName = 'StatusIndex';
-        params.KeyConditionExpression = 'status = :status';
-        params.ExpressionAttributeValues = { ':status': filters.status };
-    } else if (filters.createdTime) {
-        params.IndexName = 'CreatedTimeIndex';
-        params.KeyConditionExpression = 'createdTime = :createdTime';
-        params.ExpressionAttributeValues = { ':createdTime': filters.createdTime };
-    } else if (filters.dueDate) {
-        params.IndexName = 'DueDateIndex';
-        params.KeyConditionExpression = 'dueDate = :dueDate';
-        params.ExpressionAttributeValues = { ':dueDate': filters.dueDate };
+        filterExpressions.push('status = :status');
+        expressionAttributeValues[':status'] = filters.status;
+    }
+    if (filters.dueDate) {
+        filterExpressions.push('dueDate = :dueDate');
+        expressionAttributeValues[':dueDate'] = filters.dueDate;
     }
 
-    const result = await db.query(params).promise();
+    if (filterExpressions.length > 0) {
+        params.FilterExpression = filterExpressions.join(' AND ');
+        params.ExpressionAttributeValues = expressionAttributeValues;
+    }
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(result.Items as Todo[]),
-    };
+    try {
+        const result = await db.scan(params).promise();
+        return {
+            statusCode: 200,
+            body: JSON.stringify(result.Items as Todo[]),
+        };
+    } catch (error) {
+        console.error('Error querying items:', error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ message: 'Error retrieving todos' }),
+        };
+    }
 };

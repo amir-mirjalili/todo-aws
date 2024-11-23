@@ -16,6 +16,14 @@ jest.mock('aws-sdk', () => {
 describe('Update Todo Lambda Function', () => {
     const mockContext: Context = {} as any;
 
+    beforeAll(() => {
+        process.env.TODOS_TABLE = 'TodosTable';
+    });
+
+    afterAll(() => {
+        delete process.env.TODOS_TABLE;
+    });
+
     it('should update a todo item', async () => {
         const event: APIGatewayProxyEvent = {
             pathParameters: { id: '12345' },
