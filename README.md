@@ -92,7 +92,6 @@ This project is a serverless API for managing Todo items, built with AWS Lambda,
 **Query Parameters(Optional):**:
 - ```status```(string): 
 - ```dueDate```(string): 
-- ```createdTime```(string):
 
 ##### Response:
    ```json
